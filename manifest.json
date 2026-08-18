@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "id": "cd.digitalocean",
+  "name": "DigitalOcean Console",
+  "version": "1.0.0",
+  "author": "Craig Derington",
+  "license": "MIT",
+  "description": "A secure, keyboard-friendly DigitalOcean infrastructure dashboard for the Omarchy bar.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "DigitalOcean Console",
+    "description": "Monitor and safely operate Droplets, Kubernetes, databases, App Platform, networking, storage, domains, projects, and billing through existing doctl contexts.",
+    "category": "Cloud",
+    "aliases": ["digitalocean", "digital ocean", "doctl", "droplets", "doks", "cloud"],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "refreshIntervalSec": 60,
+      "idleRefreshIntervalSec": 600,
+      "notificationsEnabled": true,
+      "lowBalanceThreshold": 10
+    },
+    "schema": [
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Open-panel refresh interval (seconds)",
+        "min": 30,
+        "max": 3600,
+        "step": 30,
+        "defaultValue": 60,
+        "description": "Polling frequency while the DigitalOcean panel is open."
+      },
+      {
+        "key": "idleRefreshIntervalSec",
+        "type": "integer",
+        "label": "Background refresh interval (seconds)",
+        "min": 60,
+        "max": 7200,
+        "step": 60,
+        "defaultValue": 600,
+        "description": "Polling frequency while the panel is closed. It is clamped to at least the open-panel interval."
+      },
+      {
+        "key": "notificationsEnabled",
+        "type": "boolean",
+        "label": "Desktop health notifications",
+        "defaultValue": true,
+        "description": "Notify when a previously healthy Droplet, cluster, database, or app becomes unhealthy, or when balance crosses the configured threshold."
+      },
+      {
+        "key": "lowBalanceThreshold",
+        "type": "number",
+        "label": "Low-balance warning threshold (USD)",
+        "min": 0,
+        "max": 10000,
+        "step": 1,
+        "defaultValue": 10,
+        "description": "Mark the widget urgent and notify when a positive account balance drops below this value. Set to 0 to disable."
+      }
+    ]
+  }
+}

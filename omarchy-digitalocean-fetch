@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""JSON command interface used by the Omarchy DigitalOcean panel."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from typing import Any
+
+from digitalocean_backend import (
+    DigitalOceanClient,
+    DigitalOceanError,
+    build_dashboard,
+    list_contexts,
+    run_droplet_action,
+)
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(description="DigitalOcean data bridge for Omarchy")
+    commands = root.add_subparsers(dest="mode", required=True)
+
+    dashboard = commands.add_parser("dashboard", help="Fetch dashboard data")
+    dashboard.add_argument("--context", default="")
+
+    contexts = commands.add_parser("contexts", help="List doctl authentication contexts")
+    contexts.add_argument("--context", default="")
+
+    action = commands.add_parser("droplet-action", help="Run a safe Droplet power action")
+    action.add_argument("--context", default="")
+    action.add_argument("--action", required=True)
+    action.add_argument("--target", required=True)
+    return root
+
+
+def execute(arguments: argparse.Namespace) -> dict[str, Any]:
+    client = DigitalOceanClient(context=arguments.context)
+    if arguments.mode == "dashboard":
+        result = build_dashboard(client)
+        result["context"] = arguments.context
+        return result
+    if arguments.mode == "contexts":
+        return {"success": True, "contexts": list_contexts(client)}
+    return run_droplet_action(client, arguments.action, arguments.target)
+
+
+def main(argv: list[str] | None = None) -> int:
+    arguments = parser().parse_args(argv)
+    try:
+        result = execute(arguments)
+        print(json.dumps(result, separators=(",", ":"), sort_keys=True))
+        return 0
+    except DigitalOceanError as error:
+        print(json.dumps({"success": False, "error": str(error)}, separators=(",", ":")), file=sys.stdout)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
