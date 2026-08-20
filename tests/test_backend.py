@@ -73,6 +73,37 @@ class DigitalOceanClientTests(unittest.TestCase):
         self.assertEqual(result["summary"]["activeApps"], 1)
         self.assertEqual(result["errors"], {"databases": "permission denied"})
 
+    def test_non_finite_numbers_are_clamped_instead_of_crashing(self):
+        backend = load_backend()
+        responses = {
+            ("doctl", "--interactive=false", "account", "get", "--output", "json"): (0, '[{"email":"owner@example.com"}]', ""),
+            ("doctl", "--interactive=false", "compute", "droplet", "list", "--output", "json"): (0, '[{"id":12,"name":"web","status":"active","vcpus":"1e999","memory":"NaN","disk":80}]', ""),
+            ("doctl", "--interactive=false", "kubernetes", "cluster", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "databases", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "apps", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "compute", "load-balancer", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "compute", "volume", "list", "--output", "json"): (0, '[{"id":"v1","name":"data","size_gigabytes":"-Infinity"}]', ""),
+            ("doctl", "--interactive=false", "compute", "snapshot", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "compute", "domain", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "projects", "list", "--output", "json"): (0, "[]", ""),
+            ("doctl", "--interactive=false", "balance", "get", "--output", "json"): (0, '[{"account_balance":"Infinity"}]', ""),
+        }
+        client = backend.DigitalOceanClient(runner=RecordingRunner(responses))
+
+        result = backend.build_dashboard(client)
+
+        self.assertEqual(result["state"], "ready")
+        self.assertEqual(result["errors"], {})
+        self.assertEqual(result["droplets"][0]["vcpus"], 0)
+        self.assertEqual(result["droplets"][0]["memoryMb"], 0)
+        self.assertEqual(result["volumes"][0]["sizeGb"], 0.0)
+        self.assertEqual(result["billing"]["accountBalance"], 0.0)
+        # The payload handed to the panel must stay strict JSON.
+        import json as json_module
+        encoded = json_module.dumps(result, allow_nan=False)
+        self.assertNotIn("NaN", encoded)
+        self.assertNotIn("Infinity", encoded)
+
     def test_droplet_actions_are_allowlisted_and_target_ids_are_strict(self):
         backend = load_backend()
         responses = {

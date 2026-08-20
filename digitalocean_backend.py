@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import subprocess
 from collections.abc import Callable, Sequence
@@ -97,9 +98,12 @@ def _rows(payload: Any, key: str = "") -> list[dict[str, Any]]:
 
 def _number(value: Any) -> float:
     try:
-        return float(value or 0)
+        number = float(value or 0)
     except (TypeError, ValueError):
         return 0.0
+    # inf/NaN would crash int() conversion with OverflowError and make
+    # json.dumps emit non-standard Infinity/NaN tokens the panel cannot parse.
+    return number if math.isfinite(number) else 0.0
 
 
 def _region(value: Any) -> str:

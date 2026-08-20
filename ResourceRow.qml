@@ -38,7 +38,9 @@ BorderSurface {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
-    anchors.margins: parent.contentLeftInset
+    anchors.leftMargin: parent.contentLeftInset
+    anchors.rightMargin: parent.contentRightInset
+    anchors.topMargin: parent.contentTopInset
     spacing: Style.space(5)
 
     RowLayout {

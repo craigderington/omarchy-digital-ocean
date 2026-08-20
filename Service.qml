@@ -220,7 +220,7 @@ Item {
     projects = retained.projects
     previousHealth = next
     state = String(data.state || "error")
-    message = String(data.message || "")
+    message = String(data.message || data.error || "")
     revision++
     initialLoad = false
   }
